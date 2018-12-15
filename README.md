@@ -2,6 +2,8 @@
 
 A small step for man kind, one giant leap for build scripts.
 
+> Note: Most of the stuff described here is not implemented yet. This is what I like to call MDD (Markdown Driven Development) 👍
+
 ## What is it?
 
 A super simple way of composing "steps" in a C# script. No strings attached (pun intended 😀).
