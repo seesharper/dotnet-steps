@@ -111,11 +111,11 @@ By default, `dotnet-step` will create a summary at the end of execution like thi
 ---------------------------------------------------------------------
 Summary Time Report
 ---------------------------------------------------------------------
-Step 							Duration
-------                    		--------
+Step							Duration
+------							--------
 build							(1.2sec)
-test 							(5.6sec)
-------                    		--------
+test							(5.6sec)
+------							--------
 Total							(6.9sec)
 ```
 
