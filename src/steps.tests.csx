@@ -10,20 +10,26 @@ return await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWit
 
 static  List<string> EmptyArgs = new List<string>();
 
-public async Task ShouldExecuteDefaultStep()
+public async Task ShouldExecuteStep()
 {
-    await StepRunner.Execute(EmptyArgs, step1);
+    await StepRunner.Execute(new List<string>(){"step1"});
     TestContext.StandardOut.Should().Contain("step1");
 }
 
-public async Task ShouldExecuteSingleStep()
+public async Task ShouldShowHelp()
 {
-    await StepRunner.Execute("step1");
-    TestContext.StandardOut.Should().Contain("step1");
+    await StepRunner.Execute(new List<string>(){"help"});
+    TestContext.StandardOut.Should().Contain("Available Steps");
+    TestContext.StandardOut.Should().Contain("This is step one");
+
 }
 
+// public async Task ShouldExecuteSingleStep()
+// {
+//     await StepRunner.Execute("step1");
+//     TestContext.StandardOut.Should().Contain("step1");
+// }
 
-
-
+[StepDescription("This is step one")]
 
 static Step step1 = () => WriteLine(nameof(step1));

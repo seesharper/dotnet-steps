@@ -38,8 +38,17 @@ return await ExecuteSteps(Args);
 The `Args` is used to determine which step(s) to execute. In the case of an empty arguments list, we can specify the default step like this. The following example specifies the `build` step as the `default` step. 
 
 ```C#
-Step default = () => build();
+Step defaultStep = () => build();
 ```
+
+Another way of specifying the default step is to specify the `DefaultStepAttribute`.
+
+```
+[Step(Default=true)]
+Step build = () => WriteLine(nameof(build));
+```
+
+
 
 We can now execute this script like
 
