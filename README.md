@@ -44,7 +44,7 @@ Step defaultStep = () => build();
 Another way of specifying the default step is to specify the `DefaultStepAttribute`.
 
 ```
-[Step(Default=true)]
+[DefaultStep]
 Step build = () => WriteLine(nameof(build));
 ```
 
