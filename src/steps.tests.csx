@@ -4,9 +4,19 @@
 #r "nuget: FluentAssertions, 5.5.3"
 using static ScriptUnit;
 using FluentAssertions;
+using System.Threading;
 
+[StepDescription("This is step one")]
+[DefaultStep]
+Step step1 = () => WriteLine("nameof(step1)");
 
-return await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Should")).Execute();
+Step step2 = () => {
+        step1();
+        Thread.Sleep(100);
+        WriteLine("nameof(step1)");
+    };
+
+await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Should")).Execute();
 
 static  List<string> EmptyArgs = new List<string>();
 
@@ -30,15 +40,11 @@ public async Task ShouldShowHelp()
     TestContext.StandardOut.Should().Contain("step1 (default)");
 }
 
+public async Task ShouldExecuteSingleStep()
+{
+    await StepRunner.Execute(new List<string>(){"step2"});
+    TestContext.StandardOut.Should().Contain("step1");
+}
 
 
 
-// public async Task ShouldExecuteSingleStep()
-// {
-//     await StepRunner.Execute("step1");
-//     TestContext.StandardOut.Should().Contain("step1");
-// }
-
-[StepDescription("This is step one")]
-[DefaultStep]
-static Step step1 = () => WriteLine(nameof(step1));

@@ -40,7 +40,23 @@ public static void ShowHelp(this StepInfo[] steps)
 
 public static void ShowSummary(this StepResult[] results)
 {
+    WriteLine("---------------------------------------------------------------------");
+    WriteLine("Steps Summary");
+    WriteLine("---------------------------------------------------------------------");
+    var stepMaxWidth = results.Select(s => $"{s.Name}".Length).OrderBy(l => l).Last() + 15;
+    WriteLine($"{"Step".PadRight(stepMaxWidth)}Duration");
 
+    WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(24, '-')}");
+    //WriteLine("".PadRight(20,'-'));
+    TimeSpan total = new TimeSpan();
+    foreach (var result in results)
+    {
+        total = total.Add(result.Duration);
+        WriteLine($"{result.Name.PadRight(stepMaxWidth)}{result.Duration.ToString()} seconds");
+    }
+    WriteLine("---------------------------------------------------------------------");
+    WriteLine($"{"Total".PadRight(stepMaxWidth)}{total.ToString()}");
+    // Console.WriteLine($"{name.PadRight(maxWidth, ' ')} {(int)testCase.Duration.TotalMilliseconds}ms");
 }
 
 
@@ -55,13 +71,6 @@ public static class StepRunner
         _submissionType = submission.GetType();
     }
 
-    //Drop the default stuff. Search for a "default" delegate
-
-    //Also create a summary delegate and a usage delegate that users can use to format summary and display help.
-
-    //public async static Task Execute(params string[] steps, AsyncStep defaultStep = null)
-
-
     public async static Task Execute(IList<string> stepNames)
     {
         await ExecuteSteps(stepNames.ToArray());
@@ -69,37 +78,71 @@ public static class StepRunner
 
     private async static Task ExecuteSteps(string[] stepNames)
     {
-        var stepDelegates2 = GetStepDelegates();
         var results = new List<StepResult>();
 
-        SummaryStep summaryStep = GetSummaryStepDelegate();
+        WrapFields(results);
 
-        if (stepDelegates2.Keys.Intersect(stepNames).Count() == 0)
+        var stepDelegates = GetStepDelegates();
+
+        if (stepDelegates.Keys.Intersect(stepNames).Count() == 0)
         {
-            var defaultDelegate = GetDefaultDelegate(stepDelegates2);
-            if (defaultDelegate != null)
-            {
-
-            }
-            stepDelegates2.Values.ToArray().ShowHelp();
+            await GetDefaultDelegate(stepDelegates)();
         }
 
         foreach(var stepName in stepNames)
         {
             if (stepName.Equals("help", StringComparison.OrdinalIgnoreCase))
             {
-                stepDelegates2.Values.ToArray().ShowHelp();
+                stepDelegates.Values.ToArray().ShowHelp();
                 continue;
             }
 
-            if (stepDelegates2.TryGetValue(stepName, out var stepDelegate))
+            if (stepDelegates.TryGetValue(stepName, out var stepDelegate))
             {
-                results.Add(await stepDelegate.Invoke());
+                await stepDelegate.Invoke();
                 continue;
             }
         }
 
-        summaryStep(results);
+        GetSummaryStepDelegate()(results);
+    }
+
+    private static void WrapFields(List<StepResult> results)
+    {
+        WrapStepFields(results);
+        WrapAsyncStepFields(results);
+    }
+
+    private static void WrapStepFields(List<StepResult> results)
+    {
+        var stepFields = GetStepFields<Step>();
+        foreach(var stepField in stepFields)
+        {
+            var step = GetStepDelegate<Step>(stepField);
+            Step wrappedStep = () =>
+            {
+                var stopWatch = Stopwatch.StartNew();
+                step();
+                results.Add(new StepResult(stepField.Name, stopWatch.Elapsed));
+            };
+            stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
+        }
+    }
+
+    private static void WrapAsyncStepFields(List<StepResult> results)
+    {
+        var stepFields = GetStepFields<AsyncStep>();
+        foreach(var stepField in stepFields)
+        {
+            var step = GetStepDelegate<AsyncStep>(stepField);
+            AsyncStep wrappedStep = async () =>
+            {
+                var stopWatch = Stopwatch.StartNew();
+                await step();
+                results.Add(new StepResult(stepField.Name, stopWatch.Elapsed));
+            };
+            stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
+        }
     }
 
 
@@ -126,7 +169,11 @@ public static class StepRunner
             return () => defaultStepDelegate.Invoke();
         }
 
-        return null;
+        return () =>
+        {
+            stepDelegates.Values.ToArray().ShowHelp();
+            return Task.CompletedTask;
+        };
 
     }
 
@@ -235,11 +282,9 @@ public class StepInfo
     public string Description { get; }
     public bool IsDefault { get; }
 
-    public async Task<StepResult> Invoke()
+    public async Task Invoke()
     {
-        var stopWatch = Stopwatch.StartNew();
         await _step();
-        return new StepResult(Name, stopWatch.Elapsed);
     }
 }
 
