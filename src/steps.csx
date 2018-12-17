@@ -1,18 +1,27 @@
 
 using System.Reflection;
 
+/// <summary>
+/// Represents a synchronous step.
+/// </summary>
 public delegate void Step();
 
+/// <summary>
+/// Represents an asynchronous step.
+/// </summary>
+/// <returns></returns>
 public delegate Task AsyncStep();
 
+/// <summary>
+/// Represents a function that displays a summary report.
+/// </summary>
+/// <param name="results"></param>
 public delegate void SummaryStep(IEnumerable<StepResult> results);
 
-
+// Dummy lambda to obtain the submission instance.
 Action stepsDummyaction = () => StepsDummy();
 
-WriteLine(stepsDummyaction.Target.GetType());
-
-public void StepsDummy(){}
+void StepsDummy(){}
 
 
 StepRunner.Initialize(stepsDummyaction.Target);
@@ -47,7 +56,6 @@ public static void ShowSummary(this StepResult[] results)
     WriteLine($"{"Step".PadRight(stepMaxWidth)}Duration");
 
     WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(24, '-')}");
-    //WriteLine("".PadRight(20,'-'));
     TimeSpan total = new TimeSpan();
     foreach (var result in results)
     {
@@ -56,7 +64,6 @@ public static void ShowSummary(this StepResult[] results)
     }
     WriteLine("---------------------------------------------------------------------");
     WriteLine($"{"Total".PadRight(stepMaxWidth)}{total.ToString()}");
-    // Console.WriteLine($"{name.PadRight(maxWidth, ' ')} {(int)testCase.Duration.TotalMilliseconds}ms");
 }
 
 
@@ -145,7 +152,6 @@ public static class StepRunner
         }
     }
 
-
     private static SummaryStep GetSummaryStepDelegate()
     {
         var summarySteps = GetStepDelegates<SummaryStep>();
@@ -153,6 +159,7 @@ public static class StepRunner
         {
             throw new InvalidOperationException("Found multiple summary steps");
         }
+
         if (summarySteps.Length == 1)
         {
             return summarySteps[0];

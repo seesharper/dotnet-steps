@@ -12,9 +12,9 @@ Step step1 = () => WriteLine("nameof(step1)");
 
 Step step2 = () => {
         step1();
-        Thread.Sleep(100);
-        WriteLine("nameof(step1)");
+        WriteLine("nameof(step2)");
     };
+
 
 await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Should")).Execute();
 
@@ -40,10 +40,11 @@ public async Task ShouldShowHelp()
     TestContext.StandardOut.Should().Contain("step1 (default)");
 }
 
-public async Task ShouldExecuteSingleStep()
+public async Task ShouldReportNestedStep()
 {
     await StepRunner.Execute(new List<string>(){"step2"});
     TestContext.StandardOut.Should().Contain("step1");
+    TestContext.StandardOut.Should().Contain("step2");
 }
 
 
