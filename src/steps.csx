@@ -5,6 +5,9 @@ public delegate void Step();
 
 public delegate Task AsyncStep();
 
+public delegate void SummaryStep(IEnumerable<StepResult> results);
+
+
 Action stepsDummyaction = () => StepsDummy();
 
 WriteLine(stepsDummyaction.Target.GetType());
@@ -20,7 +23,7 @@ public static void ShowHelp(this StepInfo[] steps)
     WriteLine("---------------------------------------------------------------------");
     WriteLine("Available Steps");
     WriteLine("---------------------------------------------------------------------");
-    var stepMaxWidth = steps.Select(s => $"{s.Name}".Length).OrderBy(l => l).Last() + 10;
+    var stepMaxWidth = steps.Select(s => $"{s.Name}".Length).OrderBy(l => l).Last() + 15;
     var descriptionMaxWidth = steps.Select(s => $"{s.Description}".Length).OrderBy(l => l).Last();
     Write("Step".PadRight(stepMaxWidth, ' '));
     WriteLine("Description");
@@ -29,12 +32,16 @@ public static void ShowHelp(this StepInfo[] steps)
     WriteLine("".PadRight(descriptionMaxWidth,'-'));
     foreach(var step in steps)
     {
-        Write(step.Name.PadRight(stepMaxWidth, ' '));
+        var name = step.Name + (step.IsDefault ? " (default)" : string.Empty);
+        Write(name.PadRight(stepMaxWidth, ' '));
         WriteLine(step.Description);
     }
 }
 
+public static void ShowSummary(this StepResult[] results)
+{
 
+}
 
 
 public static class StepRunner
@@ -62,51 +69,102 @@ public static class StepRunner
 
     private async static Task ExecuteSteps(string[] stepNames)
     {
-        var stepDelegates = GetStepDelegates<Step>().ToDictionary(si => si.Name, si => si, StringComparer.OrdinalIgnoreCase);
-        var asyncStepDelegates = GetStepDelegates<AsyncStep>().ToDictionary(si => si.Name, si => si, StringComparer.OrdinalIgnoreCase);
+        var stepDelegates2 = GetStepDelegates();
         var results = new List<StepResult>();
 
-        if (stepDelegates.Keys.Intersect(stepNames).Count() == 0 && asyncStepDelegates.Keys.Intersect(stepNames).Count() == 0)
-        {
+        SummaryStep summaryStep = GetSummaryStepDelegate();
 
+        if (stepDelegates2.Keys.Intersect(stepNames).Count() == 0)
+        {
+            var defaultDelegate = GetDefaultDelegate(stepDelegates2);
+            if (defaultDelegate != null)
+            {
+
+            }
+            stepDelegates2.Values.ToArray().ShowHelp();
         }
 
         foreach(var stepName in stepNames)
         {
             if (stepName.Equals("help", StringComparison.OrdinalIgnoreCase))
             {
-                stepDelegates.Values.Cast<StepInfo>().Concat(asyncStepDelegates.Values.Cast<StepInfo>()).ToArray().ShowHelp();
+                stepDelegates2.Values.ToArray().ShowHelp();
                 continue;
             }
 
-            if (stepDelegates.TryGetValue(stepName, out var stepDelegate))
+            if (stepDelegates2.TryGetValue(stepName, out var stepDelegate))
             {
-                stepDelegate.Step();
+                results.Add(await stepDelegate.Invoke());
                 continue;
-            }
-            if (asyncStepDelegates.TryGetValue(stepName, out var asyncStepDelegate))
-            {
-                await asyncStepDelegate.Step();
             }
         }
+
+        summaryStep(results);
     }
 
 
-    private static StepInfo<TStep>[] GetStepDelegates<TStep>()
+    private static SummaryStep GetSummaryStepDelegate()
     {
-        var fieldSteps =  GetStepFields<TStep>().Select(f => GetStepInfo<TStep>(f));
-        var propertySteps = GetStepProperties<TStep>().Select(p => GetStepInfo<TStep>(p));
+        var summarySteps = GetStepDelegates<SummaryStep>();
+        if (summarySteps.Length  > 1)
+        {
+            throw new InvalidOperationException("Found multiple summary steps");
+        }
+        if (summarySteps.Length == 1)
+        {
+            return summarySteps[0];
+        }
+
+        return results => results.ToArray().ShowSummary();
+    }
+
+    private static Func<Task> GetDefaultDelegate(Dictionary<string, StepInfo> stepDelegates)
+    {
+        var defaultStepDelegate = stepDelegates.Values.Where(si => si.IsDefault).SingleOrDefault();
+        if (defaultStepDelegate != null)
+        {
+            return () => defaultStepDelegate.Invoke();
+        }
+
+        return null;
+
+    }
+
+    private static Dictionary<string, StepInfo> GetStepDelegates()
+    {
+        var stepFields = GetStepFields<Step>();
+        List<StepInfo> results = new List<StepInfo>();
+        foreach(var stepField in stepFields)
+        {
+            StepInfo stepInfo = new StepInfo(stepField.Name, GetStepDescription(stepField), RepresentsDefaultStep(stepField), () => {GetStepDelegate<Step>(stepField)(); return Task.CompletedTask;});
+            results.Add(stepInfo);
+        }
+
+        var asyncStepFields = GetStepFields<AsyncStep>();
+        foreach (var asyncStepField in asyncStepFields)
+        {
+            StepInfo stepInfo = new StepInfo(asyncStepField.Name, GetStepDescription(asyncStepField), RepresentsDefaultStep(asyncStepField), () => GetStepDelegate<AsyncStep>(asyncStepField)());
+            results.Add(stepInfo);
+        }
+
+        return results.ToDictionary(si => si.Name, si => si, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static TStep GetStepDelegate<TStep>(FieldInfo stepField)
+    {
+        return (TStep)(stepField.IsStatic ? stepField.GetValue(null) : stepField.GetValue(_submission));
+    }
+
+    private static TStep GetStepDelegate<TStep>(PropertyInfo property)
+    {
+        return (TStep)(property.GetMethod.IsStatic ? property.GetValue(null) : property.GetValue(_submission));
+    }
+
+    private static TStep[] GetStepDelegates<TStep>()
+    {
+        var fieldSteps =  GetStepFields<TStep>().Select(f => GetStepDelegate<TStep>(f));
+        var propertySteps = GetStepProperties<TStep>().Select(p => GetStepDelegate<TStep>(p));
         return fieldSteps.Concat(propertySteps).ToArray();
-    }
-
-    private static StepInfo<TStep> GetStepInfo<TStep>(PropertyInfo property)
-    {
-        return new StepInfo<TStep>(property.Name, (TStep)(property.GetMethod.IsStatic ? property.GetValue(null) : property.GetValue(_submission)), GetStepDescription(property), RepresentsDefaultStep(property));
-    }
-
-    private static StepInfo<TStep> GetStepInfo<TStep>(FieldInfo field)
-    {
-        return new StepInfo<TStep>(field.Name,(TStep)(field.IsStatic ? field.GetValue(null) : field.GetValue(_submission)), GetStepDescription(field), RepresentsDefaultStep(field));
     }
 
     private static string GetStepDescription(MemberInfo stepFieldInfo)
@@ -116,7 +174,7 @@ public static class StepRunner
 
     private static bool RepresentsDefaultStep(MemberInfo memberInfo)
     {
-        return memberInfo.IsDefined(typeof(DefaultStepAttribute)) && memberInfo.Name.Equals("defaultstep", StringComparison.OrdinalIgnoreCase);
+        return memberInfo.IsDefined(typeof(DefaultStepAttribute)) || memberInfo.Name.Equals("defaultstep", StringComparison.OrdinalIgnoreCase);
     }
 
     private static FieldInfo[] GetStepFields<TStep>()
@@ -128,25 +186,6 @@ public static class StepRunner
     {
         return _submissionType.GetProperties().Where(f => f.PropertyType == typeof(TStep)).ToArray();
     }
-
-
-
-
-
-    public class StepResult
-    {
-        public StepResult(string name, TimeSpan duration)
-        {
-            Name = name;
-            Duration = duration;
-        }
-
-        public string Name { get; }
-        public TimeSpan Duration { get; }
-    }
-
-
-
 }
 
 [AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
@@ -167,27 +206,44 @@ public sealed class DefaultStepAttribute : Attribute
     }
 }
 
+ public class StepResult
+    {
+        public StepResult(string name, TimeSpan duration)
+        {
+            Name = name;
+            Duration = duration;
+        }
+
+        public string Name { get; }
+        public TimeSpan Duration { get; }
+    }
+
+
 public class StepInfo
 {
-    public StepInfo(string name, string description, bool isDefault)
+    private readonly Func<Task> _step;
+
+    public StepInfo(string name, string description, bool isDefault, Func<Task> step)
     {
         Name = name;
         Description = description;
         IsDefault = isDefault;
+        _step = step;
     }
 
     public string Name { get; }
     public string Description { get; }
     public bool IsDefault { get; }
+
+    public async Task<StepResult> Invoke()
+    {
+        var stopWatch = Stopwatch.StartNew();
+        await _step();
+        return new StepResult(Name, stopWatch.Elapsed);
+    }
 }
 
-public class StepInfo<TStep> : StepInfo
-    {
-        public StepInfo(string name, TStep step, string description, bool isDefault) : base(name, description, isDefault)
-        {
-            Step = step;
-        }
 
-        public TStep Step { get; }
 
-    }
+
+

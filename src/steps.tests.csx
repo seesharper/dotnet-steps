@@ -16,13 +16,22 @@ public async Task ShouldExecuteStep()
     TestContext.StandardOut.Should().Contain("step1");
 }
 
+public async Task ShouldExecuteDefaultStep()
+{
+    await StepRunner.Execute(new List<string>());
+    TestContext.StandardOut.Should().Contain("step1");
+}
+
 public async Task ShouldShowHelp()
 {
     await StepRunner.Execute(new List<string>(){"help"});
     TestContext.StandardOut.Should().Contain("Available Steps");
     TestContext.StandardOut.Should().Contain("This is step one");
-
+    TestContext.StandardOut.Should().Contain("step1 (default)");
 }
+
+
+
 
 // public async Task ShouldExecuteSingleStep()
 // {
@@ -31,5 +40,5 @@ public async Task ShouldShowHelp()
 // }
 
 [StepDescription("This is step one")]
-
+[DefaultStep]
 static Step step1 = () => WriteLine(nameof(step1));
