@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>ScriptUnit</id>
+    <title>ScriptUnit</title>
+    <version>0.0.1</version>
+    <description>A small step for man kind, but a HUGE leap for build scripts.</description>
+    <authors>Bernhard Richter</authors>
+    <owners>Bernhard Richter</owners>
+    <projectUrl>https://github.com/seesharper/dotnet-steps</projectUrl>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+    <tags>C# UnitTesting Scripting</tags>
+  </metadata>
+</package>

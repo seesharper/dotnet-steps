@@ -1,4 +1,8 @@
 
+//NOTE : Add handling of no default delegate
+// ALSO execute if only one delegate.
+
+
 using System.Reflection;
 
 /// <summary>
