@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 ******************************************************************************
-    ScriptUnit version 0.1.3
+    dotnet-steps version 0.0.1
     https://github.com/seesharper/dotnet-steps
     http://twitter.com/bernhardrichter
 ******************************************************************************/
@@ -44,7 +44,7 @@ public delegate void SummaryStep(IEnumerable<StepResult> results);
 // Dummy lambda to obtain the submission instance.
 Action stepsDummyaction = () => StepsDummy();
 
-void StepsDummy(){}
+void StepsDummy() { }
 
 
 StepRunner.Initialize(stepsDummyaction.Target);
@@ -62,8 +62,8 @@ public static void ShowHelp(this StepInfo[] steps)
     WriteLine("---------------------------------------------------------------------");
     var stepMaxWidth = steps.Select(s => $"{s.Name}".Length).OrderBy(l => l).Last() + 15;
     WriteLine($"{"Step".PadRight(stepMaxWidth)}Description");
-    WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(18, '-')}");
-    foreach(var step in steps)
+    WriteLine($"{"".PadRight(stepMaxWidth - 15, '-')}{"".PadLeft(15)}{"".PadRight(18, '-')}");
+    foreach (var step in steps)
     {
         var name = step.Name + (step.IsDefault ? " (default)" : string.Empty);
         Write(name.PadRight(stepMaxWidth, ' '));
@@ -84,7 +84,7 @@ public static void ShowSummary(this StepResult[] results)
     var stepMaxWidth = results.Select(s => $"{s.Name}".Length).OrderBy(l => l).Last() + 15;
     WriteLine($"{"Step".PadRight(stepMaxWidth)}Duration{"".PadLeft(10)} Total");
 
-    WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(16, '-')}{"".PadLeft(3)}{"".PadRight(16, '-')}");
+    WriteLine($"{"".PadRight(stepMaxWidth - 15, '-')}{"".PadLeft(15)}{"".PadRight(16, '-')}{"".PadLeft(3)}{"".PadRight(16, '-')}");
     TimeSpan total = TimeSpan.Zero;
     foreach (var result in results)
     {
@@ -117,12 +117,6 @@ private static class StepRunner
 
     public async static Task Execute(IList<string> stepNames)
     {
-        await ExecuteSteps(stepNames.ToArray());
-    }
-
-    private async static Task ExecuteSteps(string[] stepNames)
-    {
-
         if (!HasWrappedFields)
         {
             WrapFields(_results);
@@ -136,7 +130,7 @@ private static class StepRunner
             await GetDefaultDelegate(stepDelegates)();
         }
 
-        foreach(var stepName in stepNames)
+        foreach (var stepName in stepNames)
         {
             _callStack.Clear();
 
@@ -166,7 +160,7 @@ private static class StepRunner
     private static void WrapStepFields()
     {
         var stepFields = GetStepFields<Step>();
-        foreach(var stepField in stepFields)
+        foreach (var stepField in stepFields)
         {
             var step = GetStepDelegate<Step>(stepField);
             Step wrappedStep = () =>
@@ -184,7 +178,7 @@ private static class StepRunner
     private static void WrapAsyncStepFields(List<StepResult> results)
     {
         var stepFields = GetStepFields<AsyncStep>();
-        foreach(var stepField in stepFields)
+        foreach (var stepField in stepFields)
         {
             var step = GetStepDelegate<AsyncStep>(stepField);
             AsyncStep wrappedStep = async () =>
@@ -223,7 +217,7 @@ private static class StepRunner
     private static SummaryStep GetSummaryStepDelegate()
     {
         var summarySteps = GetStepDelegates<SummaryStep>();
-        if (summarySteps.Length  > 1)
+        if (summarySteps.Length > 1)
         {
             throw new InvalidOperationException("Found multiple summary steps");
         }
@@ -261,9 +255,9 @@ private static class StepRunner
     {
         var stepFields = GetStepFields<Step>();
         List<StepInfo> results = new List<StepInfo>();
-        foreach(var stepField in stepFields)
+        foreach (var stepField in stepFields)
         {
-            StepInfo stepInfo = new StepInfo(stepField.Name, GetStepDescription(stepField), RepresentsDefaultStep(stepField), () => {GetStepDelegate<Step>(stepField)(); return Task.CompletedTask;});
+            StepInfo stepInfo = new StepInfo(stepField.Name, GetStepDescription(stepField), RepresentsDefaultStep(stepField), () => { GetStepDelegate<Step>(stepField)(); return Task.CompletedTask; });
             results.Add(stepInfo);
         }
 
@@ -289,7 +283,7 @@ private static class StepRunner
 
     private static TStep[] GetStepDelegates<TStep>()
     {
-        var fieldSteps =  GetStepFields<TStep>().Select(f => GetStepDelegate<TStep>(f));
+        var fieldSteps = GetStepFields<TStep>().Select(f => GetStepDelegate<TStep>(f));
         var propertySteps = GetStepProperties<TStep>().Select(p => GetStepDelegate<TStep>(p));
         return fieldSteps.Concat(propertySteps).ToArray();
     }
@@ -326,6 +320,7 @@ public sealed class StepDescriptionAttribute : Attribute
     public string Description { get; }
 }
 
+[AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
 public sealed class DefaultStepAttribute : Attribute
 {
     public DefaultStepAttribute()
@@ -333,18 +328,18 @@ public sealed class DefaultStepAttribute : Attribute
     }
 }
 
- public class StepResult
+public class StepResult
+{
+    public StepResult(string name, TimeSpan duration, TimeSpan totalDuration)
     {
-        public StepResult(string name, TimeSpan duration, TimeSpan totalDuration)
-        {
-            Name = name;
-            Duration = duration;
-            TotalDuration = totalDuration;
-        }
+        Name = name;
+        Duration = duration;
+        TotalDuration = totalDuration;
+    }
 
-        public string Name { get; }
-        public TimeSpan Duration { get; set;}
-    public TimeSpan TotalDuration { get; set;}
+    public string Name { get; }
+    public TimeSpan Duration { get; set; }
+    public TimeSpan TotalDuration { get; set; }
 }
 
 
