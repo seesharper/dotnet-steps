@@ -22,9 +22,15 @@ Step step3 = () =>
     Thread.Sleep(100);
 };
 
-private IEnumerable<StepResult> _results;
+Step step4 = () =>
+{
+    step3();
+    Thread.Sleep(100);
+};
 
-SummaryStep summaryStep = (results) => _results = results;
+private StepResult[] _results;
+
+SummaryStep summaryStep = (results) => _results = results.ToArray();
 
 
 
@@ -33,7 +39,12 @@ await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Shou
 public async Task ShouldReportIndividualStepDurations()
 {
     await StepRunner.Execute(new List<string>(){"step3"});
-    _results.Last().Duration.Should().BeCloseTo(TimeSpan.FromMilliseconds(300));
+    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(300));
 }
 
 
+public async Task ShouldReportIndividualStepDurationsForNestedSteps()
+{
+    await StepRunner.Execute(new List<string>(){"step4"});
+    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(400));
+}

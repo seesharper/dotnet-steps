@@ -67,13 +67,14 @@ public static void ShowSummary(this StepResult[] results)
     WriteLine($"{"Step".PadRight(stepMaxWidth)}Duration");
 
     WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(18, '-')}");
-
-    foreach (var result in results)
+    TimeSpan total = TimeSpan.Zero;
+    foreach (var result in results.Reverse())
     {
+        total = total.Add(result.Duration);
         WriteLine($"{result.Name.PadRight(stepMaxWidth)}{result.Duration.ToString()}");
     }
     WriteLine("---------------------------------------------------------------------");
-    WriteLine($"{"Total".PadRight(stepMaxWidth)}{results.Last().Duration.ToString()}");
+    WriteLine($"{"Total".PadRight(stepMaxWidth)}{total.ToString()}");
 }
 
 
@@ -82,11 +83,19 @@ private static class StepRunner
     private static object _submission;
     private static Type _submissionType;
 
+    private static Stack<string> _callStack = new Stack<string>();
+
+    private static List<StepResult> _results = new List<StepResult>();
+
+    private static bool HasWrappedFields;
+
+
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal static void Initialize(object submission)
     {
         _submission = submission;
         _submissionType = submission.GetType();
+
     }
 
     public async static Task Execute(IList<string> stepNames)
@@ -96,9 +105,14 @@ private static class StepRunner
 
     private async static Task ExecuteSteps(string[] stepNames)
     {
-        var results = new List<StepResult>();
 
-        WrapFields(results);
+         if (!HasWrappedFields)
+         {
+            WrapFields(_results);
+            HasWrappedFields = true;
+         }
+
+
 
         var stepDelegates = GetStepDelegates();
 
@@ -109,6 +123,8 @@ private static class StepRunner
 
         foreach(var stepName in stepNames)
         {
+            _callStack.Clear();
+
             if (stepName.Equals("help", StringComparison.OrdinalIgnoreCase))
             {
                 stepDelegates.Values.ToArray().ShowHelp();
@@ -122,7 +138,8 @@ private static class StepRunner
             }
         }
 
-        GetSummaryStepDelegate()(results);
+        GetSummaryStepDelegate()(_results);
+        _results.Clear();
     }
 
     private static void WrapFields(List<StepResult> results)
@@ -139,9 +156,23 @@ private static class StepRunner
             var step = GetStepDelegate<Step>(stepField);
             Step wrappedStep = () =>
             {
+                var stepresult = new StepResult(stepField.Name, TimeSpan.Zero);
+                results.Add(stepresult);
+                _callStack.Push(stepField.Name);
                 var stopWatch = Stopwatch.StartNew();
                 step();
-                results.Add(new StepResult(stepField.Name, stopWatch.Elapsed));
+                stopWatch.Stop();
+                var durationForThisStep = stopWatch.Elapsed;
+                _callStack.Pop();
+
+                if (_callStack.Count > 0)
+                {
+                    var callingStep = results.Where(sr => sr.Name == _callStack.Peek()).Single();
+                    callingStep.Duration = callingStep.Duration.Subtract(durationForThisStep);
+                }
+
+                results[results.IndexOf(stepresult)].Duration =results[results.IndexOf(stepresult)].Duration.Add(durationForThisStep);
+
             };
             stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
         }
@@ -281,7 +312,7 @@ public sealed class DefaultStepAttribute : Attribute
         }
 
         public string Name { get; }
-        public TimeSpan Duration { get; }
+        public TimeSpan Duration { get; set;}
     }
 
 
