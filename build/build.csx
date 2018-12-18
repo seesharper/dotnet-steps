@@ -41,6 +41,7 @@ AsyncStep changelog = async () =>
 AsyncStep deploy = async () =>
 {
     test();
+    pack();
     if (BuildEnvironment.IsSecure)
     {
         await changelog();
