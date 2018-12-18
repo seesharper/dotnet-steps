@@ -1,8 +1,26 @@
-
-//NOTE : Add handling of no default delegate
-// ALSO execute if only one delegate.
-
-
+/*********************************************************************************
+    The MIT License (MIT)
+    Copyright (c) 2018 bernhard.richter@gmail.com
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+******************************************************************************
+    ScriptUnit version 0.1.3
+    https://github.com/seesharper/dotnet-steps
+    http://twitter.com/bernhardrichter
+******************************************************************************/
 using System.ComponentModel;
 using System.Reflection;
 
@@ -202,8 +220,6 @@ private static class StepRunner
         stepresult.Duration = stepresult.Duration.Add(durationForThisStep);
     }
 
-
-
     private static SummaryStep GetSummaryStepDelegate()
     {
         var summarySteps = GetStepDelegates<SummaryStep>();
@@ -222,10 +238,15 @@ private static class StepRunner
 
     private static Func<Task> GetDefaultDelegate(Dictionary<string, StepInfo> stepDelegates)
     {
+        if (stepDelegates.Count == 1)
+        {
+            return stepDelegates.First().Value.Invoke;
+        }
+
         var defaultStepDelegate = stepDelegates.Values.Where(si => si.IsDefault).SingleOrDefault();
         if (defaultStepDelegate != null)
         {
-            return () => defaultStepDelegate.Invoke();
+            return defaultStepDelegate.Invoke;
         }
 
         return () =>

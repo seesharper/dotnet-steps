@@ -59,25 +59,25 @@ await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Shou
 
 public async Task ShouldReportIndividualStepDurations()
 {
-    await StepRunner.Execute(new List<string>(){"step3"});
-    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(300));
+    await ExecuteSteps(new List<string>(){"step3"});
+    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(300), 50);
 }
 
 public async Task ShouldReportIndividualAsyncStepDurations()
 {
-    await StepRunner.Execute(new List<string>(){"asyncStep3"});
-    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(300));
+    await ExecuteSteps(new List<string>(){"asyncStep3"});
+    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(300), 50);
 }
 
 
 public async Task ShouldReportIndividualStepDurationsForNestedSteps()
 {
     await StepRunner.Execute(new List<string>(){"step4"});
-    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(400));
+    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(400), 50);
 }
 
 public async Task ShouldReportIndividualAsyncStepDurationsForNestedSteps()
 {
     await StepRunner.Execute(new List<string>(){"asyncStep4"});
-    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(400));
+    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(400), 50);
 }

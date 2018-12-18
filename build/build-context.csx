@@ -24,6 +24,8 @@ var DurationTests = Path.Combine(ScriptFolder,"..","src","duration.tests.csx");
 
 var SummaryTests = Path.Combine(ScriptFolder,"..","src","custom.summary.tests.csx");
 
+var SingleStepTests = Path.Combine(ScriptFolder,"..","src","singlestep.tests.csx");
+
 var PathToArtifactsFolders = CreateDirectory(ScriptFolder, "Artifacts");
 
 var NuGetArtifactsFolder = CreateDirectory(PathToArtifactsFolders, "Artifacts", "NuGet");

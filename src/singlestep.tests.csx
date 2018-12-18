@@ -4,17 +4,15 @@
 #r "nuget: FluentAssertions, 5.5.3"
 using static ScriptUnit;
 using FluentAssertions;
-
+using System.Threading;
 
 Step step1 = () => WriteLine(nameof(step1));
 
-Step step2 = () => WriteLine(nameof(step2));
-
 await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Should")).Execute();
 
-public async Task ShouldShowHelpWhenThereIsNoDefaultStep()
+public async Task ShouldUseSingleStepAsDefault()
 {
     await ExecuteSteps(new List<string>());
-    TestContext.StandardOut.Should().Contain("Available Steps");
-    TestContext.StandardOut.Should().NotContain("Summary");
+    TestContext.StandardOut.Should().Contain("Summary");
+    TestContext.StandardOut.Should().Contain("step1");
 }

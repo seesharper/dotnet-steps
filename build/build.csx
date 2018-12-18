@@ -16,6 +16,7 @@ Step test = () =>
     Test(SummaryTests);
     Test(DurationTests);
     Test(DefaultTests);
+    Test(SingleStepTests);
 };
 
 Step pack = () =>

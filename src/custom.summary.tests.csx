@@ -17,6 +17,6 @@ await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Shou
 
 public async Task ShouldUseCustomSummary()
 {
-    await StepRunner.Execute(new List<string>());
+    await ExecuteSteps(new List<string>());
     TestContext.StandardOut.Should().Contain("Custom Summary");
 }

@@ -11,6 +11,6 @@ await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Shou
 
 public async Task ShouldExecuteAsyncStep()
 {
-    await StepRunner.Execute(new List<string>(){"step1"});
+    await ExecuteSteps(new List<string>(){"step1"});
     TestContext.StandardOut.Should().Contain("step1");
 }
