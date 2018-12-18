@@ -83,7 +83,7 @@ private static class StepRunner
     private static object _submission;
     private static Type _submissionType;
 
-    private static Stack<string> _callStack = new Stack<string>();
+    private static Stack<StepResult> _callStack = new Stack<StepResult>();
 
     private static List<StepResult> _results = new List<StepResult>();
 
@@ -95,7 +95,6 @@ private static class StepRunner
     {
         _submission = submission;
         _submissionType = submission.GetType();
-
     }
 
     public async static Task Execute(IList<string> stepNames)
@@ -156,7 +155,7 @@ private static class StepRunner
             {
                 var stepresult = new StepResult(stepField.Name, TimeSpan.Zero, TimeSpan.Zero);
                 _results.Add(stepresult);
-                _callStack.Push(stepField.Name);
+                _callStack.Push(stepresult);
                 var stopWatch = Stopwatch.StartNew();
                 step();
                 stopWatch.Stop();
@@ -166,12 +165,10 @@ private static class StepRunner
 
                 if (_callStack.Count > 0)
                 {
-                    var callingStep = _results.Where(sr => sr.Name == _callStack.Peek()).Single();
+                    var callingStep = _callStack.Peek();
                     callingStep.Duration = callingStep.Duration.Subtract(durationForThisStep);
                 }
-
-                _results[_results.IndexOf(stepresult)].Duration = _results[_results.IndexOf(stepresult)].Duration.Add(durationForThisStep);
-
+                stepresult.Duration = stepresult.Duration.Add(durationForThisStep);
             };
             stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
         }

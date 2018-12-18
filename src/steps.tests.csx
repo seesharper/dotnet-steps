@@ -15,6 +15,12 @@ Step step2 = () => {
         WriteLine("nameof(step2)");
     };
 
+Step step3 = () => {
+    step1();
+    step2();
+    WriteLine("nameof(step3)");
+};
+
 
 await new TestRunner().AddTopLevelTests().AddFilter(m => m.Name.StartsWith("Should")).Execute();
 
@@ -51,7 +57,13 @@ public async Task ShouldMarkDefaultStepInHelp()
 {
     await StepRunner.Execute(new List<string>(){"help"});
     TestContext.StandardOut.Should().Contain("step1 (default)");
+    TestContext.StandardOut.Should().Contain("step2");
+    TestContext.StandardOut.Should().Contain("step3");
 }
 
+public async Task ShouldHandleCallingSameStepTwice()
+{
+    await StepRunner.Execute(new List<string>(){"step3"});
+}
 
 

@@ -48,11 +48,11 @@ At the end of execution we will output a summary report.
 ---------------------------------------------------------------------
 Steps Summary
 ---------------------------------------------------------------------
-Step                Duration
------               ------------------
-step1               00:00:00.0007891
+Step                Duration           Total
+-----               ----------------   ----------------
+step1               00:00:00.0006126   00:00:00.0006126
 ---------------------------------------------------------------------
-Total               00:00:00.0007891
+Total               00:00:00.0006126
 ```
 
 ### Multiple Steps
@@ -71,45 +71,93 @@ csi main.csx step1 step2
 
 Which will generate a report showing the duration of each step.
 
-
-
-
-
-The `Args` is used to determine which step(s) to execute. In the case of an empty arguments list, we can specify the default step like this. The following example specifies the `build` step as the `default` step. 
-
-```C#
-Step defaultStep = () => build();
+```
+---------------------------------------------------------------------
+Steps Summary
+---------------------------------------------------------------------
+Step                Duration           Total
+-----               ----------------   ----------------
+step2               00:00:00.0000528   00:00:00.0000528
+step1               00:00:00.0006086   00:00:00.0006086
+---------------------------------------------------------------------
+Total               00:00:00.0006614
 ```
 
+### Nested Steps
 
-
-Show the easiest example possible before diving into the details.
-
-Another way of specifying the default step is to specify the `DefaultStepAttribute`.
-
-```
-[DefaultStep]
-Step build = () => WriteLine(nameof(build));
-```
-
-
-
-
-
-## What about async steps?
-
-We got you covered with an `AsyncStep`
+Nesting steps is as simple as calling the step within another step. 
+Notice that there is no  `DependsOn` or any other funky DSL, just plain C# 👍
 
 ```c#
-AsyncStep generateApiDocs = async () => await SomeMethodThatGeneratesApiDocs() 
+Step step1 = () => WriteLine(nameof(step1));
+Step step2 = () =>
+{
+    step1();
+    WriteLine(nameof(step2));
+};
+
+await ExecuteSteps(Args);
 ```
+
+Looking at the summary we will see that we get a full report of executed steps even if just called `step1` from within `step2`
+
+```
+---------------------------------------------------------------------
+Steps Summary
+---------------------------------------------------------------------
+Step                Duration           Total
+-----               ----------------   ----------------
+step1               00:00:00.0007010   00:00:00.0007010
+step2               00:00:00.0009654   00:00:00.0016664
+---------------------------------------------------------------------
+Total               00:00:00.0016664
+```
+
+The `Duration` column shows the time spent in the step excluding the time spent calling other steps, while the `Total` column show the time spent in the step including the time spent calling other steps.
+
+The `Total` in the end of the summary is just a sum of the `Duration` column.
+
+### Default Step
+
+When we have multiple steps in a script, we can mark a step with the `DefaultStep` attribute so that we can invoke the script without any arguments. 
+
+```c#
+Step step1 = () => WriteLine(nameof(step1));
+
+[DefaultStep]
+Step step2 = () =>
+{
+    step1();
+    WriteLine(nameof(step2));
+};
+
+await ExecuteSteps(Args);
+```
+
+
+
+### Async Steps
+
+If we need to call an `async` method from within a step  we can do that easily by declaring an `AsyncStep` 
+
+```c#
+AsyncStep step1 = async () =>
+{
+    await Task.CompletedTask;
+    WriteLine(nameof(step1));
+};
+
+await ExecuteSteps(Args);
+```
+
+We can of course call another steps from within an `AsyncStep`, but we should try to avoid calling an `AsyncStep` from within a `Step` as that would be a blocking operation. The general rules of `async/await` applies here as well.
 
 ## Help
 
-We can get a list of available steps by passing `-h.|--help` when executing our script.
+We can get a list of available steps by passing `help` when executing our script.
 
 ```shell
-csi myscript.csx --help
+csi main.csx help
 ```
 
 Witch gives us a nice list of available steps.
