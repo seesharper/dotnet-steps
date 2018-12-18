@@ -152,7 +152,7 @@ await ExecuteSteps(Args);
 
 We can of course call another steps from within an `AsyncStep`, but we should try to avoid calling an `AsyncStep` from within a `Step` as that would be a blocking operation. The general rules of `async/await` applies here as well.
 
-## Help
+### Help
 
 We can get a list of available steps by passing `help` when executing our script.
 
@@ -190,24 +190,20 @@ test
 publish
 ```
 
-Explain HelpStep here ……....
-
-
-
-## Summary
+### Summary
 
 By default, `dotnet-step` will create a summary at the end of execution like this.
 
-```shell
+```
 ---------------------------------------------------------------------
-Summary Time Report
+Steps Summary
 ---------------------------------------------------------------------
-Step							Duration
-------							--------
-build							(1.2sec)
-test							(5.6sec)
-------							--------
-Total							(6.9sec)
+Step                Duration           Total
+-----               ----------------   ----------------
+step2               00:00:00.0000528   00:00:00.0000528
+step1               00:00:00.0006086   00:00:00.0006086
+---------------------------------------------------------------------
+Total               00:00:00.0006614
 ```
 
 If we for some reason should want to remove the summary report, we can do that with a `SummaryStep` that does nothing.
@@ -219,10 +215,10 @@ SummaryStep summary = (results) => {};
 Or if we want to format the output differently
 
 ```C#
-SummaryStep summary = (results) => results.Dump(); 
+SummaryStep summary = (results) => results.ShowSummary(); 
 ```
 
-> Note: The `Dump` method is just an `IEnumerable<StepResult>`extension method witch also is an excellent way to to implement a custom summary report. 
+> Note: The `ShowSummary` method is just an `IEnumerable<StepResult>`extension method witch also is an excellent way to to implement a custom summary report. 
 
 
 
