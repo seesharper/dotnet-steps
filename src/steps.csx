@@ -68,7 +68,7 @@ public static void ShowSummary(this StepResult[] results)
 
     WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(16, '-')}{"".PadLeft(3)}{"".PadRight(16, '-')}");
     TimeSpan total = TimeSpan.Zero;
-    foreach (var result in results.Reverse())
+    foreach (var result in results)
     {
         total = total.Add(result.Duration);
         WriteLine($"{result.Name.PadRight(stepMaxWidth)}{result.Duration.ToString()}{"".PadLeft(3)}{result.TotalDuration.ToString()}");
@@ -154,14 +154,14 @@ private static class StepRunner
             Step wrappedStep = () =>
             {
                 var stepresult = new StepResult(stepField.Name, TimeSpan.Zero, TimeSpan.Zero);
-                _results.Add(stepresult);
+                //_results.Add(stepresult);
                 _callStack.Push(stepresult);
                 var stopWatch = Stopwatch.StartNew();
                 step();
                 stopWatch.Stop();
                 var durationForThisStep = stopWatch.Elapsed;
                 stepresult.TotalDuration = durationForThisStep;
-                _callStack.Pop();
+                _results.Add(_callStack.Pop());
 
                 if (_callStack.Count > 0)
                 {
