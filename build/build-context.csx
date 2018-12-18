@@ -5,20 +5,26 @@ var Owner = "seesharper";
 
 var ProjectName = "dotnet-steps";
 
-var scriptFolder = GetScriptFolder();
-var tempFolder = CreateDirectory(scriptFolder, "tmp");
-var contentFolder = CreateDirectory(tempFolder,"contentFiles", "csx", "any");
-var pathToSourceFile = Path.Combine(scriptFolder, "..", "src", "steps.csx");
-var pathToPackageScriptFile = Path.Combine(contentFolder, "main.csx");
+var ScriptFolder = GetScriptFolder();
+var TempFolder = CreateDirectory(ScriptFolder, "tmp");
+var ContentFolder = CreateDirectory(TempFolder,"contentFiles", "csx", "any");
+var PathToSourceFile = Path.Combine(ScriptFolder, "..", "src", "steps.csx");
+var PathToPackageScriptFile = Path.Combine(ContentFolder, "main.csx");
 
-var pathToNuGetMetadataSource = Path.Combine(scriptFolder,"dotnet-steps.nuspec");
-var pathToNuGetMetadataTarget = Path.Combine(tempFolder,"dotnet-steps.nuspec");
+var PathToNuGetMetadataSource = Path.Combine(ScriptFolder,"dotnet-steps.nuspec");
+var PathToNuGetMetadataTarget = Path.Combine(TempFolder,"dotnet-steps.nuspec");
 
-var stepsTests = Path.Combine(scriptFolder,"..","src","steps.tests.csx");
+var StepsTests = Path.Combine(ScriptFolder,"..","src","steps.tests.csx");
 
-var asyncTests = Path.Combine(scriptFolder,"..","src","async.steps.tests.csx");
+var AsyncTests = Path.Combine(ScriptFolder,"..","src","async.steps.tests.csx");
 
-var PathToArtifactsFolders = CreateDirectory(scriptFolder, "Artifacts");
+var DefaultTests = Path.Combine(ScriptFolder,"..","src","default.tests.csx");
+
+var DurationTests = Path.Combine(ScriptFolder,"..","src","duration.tests.csx");
+
+var SummaryTests = Path.Combine(ScriptFolder,"..","src","custom.summary.tests.csx");
+
+var PathToArtifactsFolders = CreateDirectory(ScriptFolder, "Artifacts");
 
 var NuGetArtifactsFolder = CreateDirectory(PathToArtifactsFolders, "Artifacts", "NuGet");
 var GitHubArtifactsFolder = CreateDirectory(PathToArtifactsFolders, "Artifacts", "GitHub");

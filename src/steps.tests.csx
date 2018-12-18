@@ -47,5 +47,11 @@ public async Task ShouldReportNestedStep()
     TestContext.StandardOut.Should().Contain("step2");
 }
 
+public async Task ShouldMarkDefaultStepInHelp()
+{
+    await StepRunner.Execute(new List<string>(){"help"});
+    TestContext.StandardOut.Should().Contain("step1 (default)");
+}
+
 
 

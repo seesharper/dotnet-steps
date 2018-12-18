@@ -11,15 +11,18 @@ using static ReleaseManagement;
 
 Step test = () =>
 {
-    Test(stepsTests);
-    Test(asyncTests);
+    Test(StepsTests);
+    Test(AsyncTests);
+    Test(SummaryTests);
+    Test(DurationTests);
+    Test(DefaultTests);
 };
 
 Step pack = () =>
 {
-    Copy(pathToSourceFile, pathToPackageScriptFile);
-    Copy(pathToNuGetMetadataSource, pathToNuGetMetadataTarget);
-    NuGet.Pack(tempFolder, NuGetArtifactsFolder);
+    Copy(PathToSourceFile, PathToPackageScriptFile);
+    Copy(PathToNuGetMetadataSource, PathToNuGetMetadataTarget);
+    NuGet.Pack(TempFolder, NuGetArtifactsFolder);
 };
 
 AsyncStep changelog = async () =>

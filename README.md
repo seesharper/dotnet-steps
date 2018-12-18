@@ -2,13 +2,11 @@
 
 A small step for man kind, one giant leap for build scripts.
 
-> Note: Most of the stuff described here is not implemented yet. This is what I like to call MDD (Markdown Driven Development) 👍
-
 ## What is it?
 
 A super simple way of composing "steps" in a C# script. No strings attached (pun intended 😀).
 
-## How to use
+## Installing
 
 Simply grab the `steps.csx`file from this repo and we are good to go.
 
@@ -20,32 +18,58 @@ If you are on `dotnet-script` we also have a script package
 
 
 
-## Example
+## Getting started
 
 ```c#
 #load "steps.csx"
 
-Step build = () => WriteLine(nameof(build));
+Step step1 = () => WriteLine(nameof(step1));
 
-Step publish = () => {
-    build();
-    WriteLine(nameof(publish));
-}
-
-return await ExecuteSteps(Args);
+await ExecuteSteps(Args);
 ```
 
 We can now execute this script like
 
 ```shell
-csi myscript.csx publish
+csi main.csx step1
 ```
 
 Or with dotnet-script like this
 
 ```shell
-dotnet script myscript.csx publish
+dotnet script main.csx step1
 ```
+
+> Note: The arguments passed to the script is used to determine which step(s) to execute.
+
+At the end of execution we will output a summary report.
+
+```
+---------------------------------------------------------------------
+Steps Summary
+---------------------------------------------------------------------
+Step                Duration
+-----               ------------------
+step1               00:00:00.0007891
+---------------------------------------------------------------------
+Total               00:00:00.0007891
+```
+
+### Multiple Steps
+
+```c#
+Step step1 = () => WriteLine(nameof(step1));
+Step step2 = () => WriteLine(nameof(step2));
+await ExecuteSteps(Args);
+```
+
+We can now execute both steps like this
+
+```shell
+csi main.csx step1 step2 
+```
+
+Which will generate a report showing the duration of each step.
 
 
 

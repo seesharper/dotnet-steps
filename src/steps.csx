@@ -3,6 +3,7 @@
 // ALSO execute if only one delegate.
 
 
+using System.ComponentModel;
 using System.Reflection;
 
 /// <summary>
@@ -30,6 +31,11 @@ void StepsDummy(){}
 
 StepRunner.Initialize(stepsDummyaction.Target);
 
+public static async Task ExecuteSteps(IList<string> args)
+{
+    await StepRunner.Execute(args);
+}
+
 
 public static void ShowHelp(this StepInfo[] steps)
 {
@@ -37,12 +43,8 @@ public static void ShowHelp(this StepInfo[] steps)
     WriteLine("Available Steps");
     WriteLine("---------------------------------------------------------------------");
     var stepMaxWidth = steps.Select(s => $"{s.Name}".Length).OrderBy(l => l).Last() + 15;
-    var descriptionMaxWidth = steps.Select(s => $"{s.Description}".Length).OrderBy(l => l).Last();
-    Write("Step".PadRight(stepMaxWidth, ' '));
-    WriteLine("Description");
-
-    Write("".PadRight(stepMaxWidth,'-'));
-    WriteLine("".PadRight(descriptionMaxWidth,'-'));
+    WriteLine($"{"Step".PadRight(stepMaxWidth)}Description");
+    WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(18, '-')}");
     foreach(var step in steps)
     {
         var name = step.Name + (step.IsDefault ? " (default)" : string.Empty);
@@ -53,29 +55,34 @@ public static void ShowHelp(this StepInfo[] steps)
 
 public static void ShowSummary(this StepResult[] results)
 {
+    if (results.Length == 0)
+    {
+        return;
+    }
+
     WriteLine("---------------------------------------------------------------------");
     WriteLine("Steps Summary");
     WriteLine("---------------------------------------------------------------------");
     var stepMaxWidth = results.Select(s => $"{s.Name}".Length).OrderBy(l => l).Last() + 15;
     WriteLine($"{"Step".PadRight(stepMaxWidth)}Duration");
 
-    WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(24, '-')}");
-    TimeSpan total = new TimeSpan();
+    WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(18, '-')}");
+
     foreach (var result in results)
     {
-        total = total.Add(result.Duration);
-        WriteLine($"{result.Name.PadRight(stepMaxWidth)}{result.Duration.ToString()} seconds");
+        WriteLine($"{result.Name.PadRight(stepMaxWidth)}{result.Duration.ToString()}");
     }
     WriteLine("---------------------------------------------------------------------");
-    WriteLine($"{"Total".PadRight(stepMaxWidth)}{total.ToString()}");
+    WriteLine($"{"Total".PadRight(stepMaxWidth)}{results.Last().Duration.ToString()}");
 }
 
 
-public static class StepRunner
+private static class StepRunner
 {
     private static object _submission;
     private static Type _submissionType;
 
+    [EditorBrowsable(EditorBrowsableState.Never)]
     internal static void Initialize(object submission)
     {
         _submission = submission;
@@ -150,6 +157,7 @@ public static class StepRunner
             {
                 var stopWatch = Stopwatch.StartNew();
                 await step();
+                // Do something with calling step to be able to report own time spent in this method.
                 results.Add(new StepResult(stepField.Name, stopWatch.Elapsed));
             };
             stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
@@ -298,8 +306,3 @@ public class StepInfo
         await _step();
     }
 }
-
-
-
-
-
