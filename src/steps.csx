@@ -64,14 +64,14 @@ public static void ShowSummary(this StepResult[] results)
     WriteLine("Steps Summary");
     WriteLine("---------------------------------------------------------------------");
     var stepMaxWidth = results.Select(s => $"{s.Name}".Length).OrderBy(l => l).Last() + 15;
-    WriteLine($"{"Step".PadRight(stepMaxWidth)}Duration");
+    WriteLine($"{"Step".PadRight(stepMaxWidth)}Duration{"".PadLeft(10)} Total");
 
-    WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(18, '-')}");
+    WriteLine($"{"".PadRight(stepMaxWidth - 15,'-')}{"".PadLeft(15)}{"".PadRight(16, '-')}{"".PadLeft(3)}{"".PadRight(16, '-')}");
     TimeSpan total = TimeSpan.Zero;
     foreach (var result in results.Reverse())
     {
         total = total.Add(result.Duration);
-        WriteLine($"{result.Name.PadRight(stepMaxWidth)}{result.Duration.ToString()}");
+        WriteLine($"{result.Name.PadRight(stepMaxWidth)}{result.Duration.ToString()}{"".PadLeft(3)}{result.TotalDuration.ToString()}");
     }
     WriteLine("---------------------------------------------------------------------");
     WriteLine($"{"Total".PadRight(stepMaxWidth)}{total.ToString()}");
@@ -106,13 +106,11 @@ private static class StepRunner
     private async static Task ExecuteSteps(string[] stepNames)
     {
 
-         if (!HasWrappedFields)
-         {
+        if (!HasWrappedFields)
+        {
             WrapFields(_results);
             HasWrappedFields = true;
-         }
-
-
+        }
 
         var stepDelegates = GetStepDelegates();
 
@@ -144,11 +142,11 @@ private static class StepRunner
 
     private static void WrapFields(List<StepResult> results)
     {
-        WrapStepFields(results);
+        WrapStepFields();
         WrapAsyncStepFields(results);
     }
 
-    private static void WrapStepFields(List<StepResult> results)
+    private static void WrapStepFields()
     {
         var stepFields = GetStepFields<Step>();
         foreach(var stepField in stepFields)
@@ -156,22 +154,23 @@ private static class StepRunner
             var step = GetStepDelegate<Step>(stepField);
             Step wrappedStep = () =>
             {
-                var stepresult = new StepResult(stepField.Name, TimeSpan.Zero);
-                results.Add(stepresult);
+                var stepresult = new StepResult(stepField.Name, TimeSpan.Zero, TimeSpan.Zero);
+                _results.Add(stepresult);
                 _callStack.Push(stepField.Name);
                 var stopWatch = Stopwatch.StartNew();
                 step();
                 stopWatch.Stop();
                 var durationForThisStep = stopWatch.Elapsed;
+                stepresult.TotalDuration = durationForThisStep;
                 _callStack.Pop();
 
                 if (_callStack.Count > 0)
                 {
-                    var callingStep = results.Where(sr => sr.Name == _callStack.Peek()).Single();
+                    var callingStep = _results.Where(sr => sr.Name == _callStack.Peek()).Single();
                     callingStep.Duration = callingStep.Duration.Subtract(durationForThisStep);
                 }
 
-                results[results.IndexOf(stepresult)].Duration =results[results.IndexOf(stepresult)].Duration.Add(durationForThisStep);
+                _results[_results.IndexOf(stepresult)].Duration = _results[_results.IndexOf(stepresult)].Duration.Add(durationForThisStep);
 
             };
             stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
@@ -189,7 +188,7 @@ private static class StepRunner
                 var stopWatch = Stopwatch.StartNew();
                 await step();
                 // Do something with calling step to be able to report own time spent in this method.
-                results.Add(new StepResult(stepField.Name, stopWatch.Elapsed));
+                results.Add(new StepResult(stepField.Name, stopWatch.Elapsed, stopWatch.Elapsed));
             };
             stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
         }
@@ -305,15 +304,17 @@ public sealed class DefaultStepAttribute : Attribute
 
  public class StepResult
     {
-        public StepResult(string name, TimeSpan duration)
+        public StepResult(string name, TimeSpan duration, TimeSpan totalDuration)
         {
             Name = name;
             Duration = duration;
+            TotalDuration = totalDuration;
         }
 
         public string Name { get; }
         public TimeSpan Duration { get; set;}
-    }
+    public TimeSpan TotalDuration { get; set;}
+}
 
 
 public class StepInfo

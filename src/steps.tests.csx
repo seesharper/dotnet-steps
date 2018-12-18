@@ -40,18 +40,18 @@ public async Task ShouldShowHelp()
     TestContext.StandardOut.Should().Contain("step1 (default)");
 }
 
-// public async Task ShouldReportNestedStep()
-// {
-//     await StepRunner.Execute(new List<string>(){"step2"});
-//     TestContext.StandardOut.Should().Contain("step1");
-//     TestContext.StandardOut.Should().Contain("step2");
-// }
+public async Task ShouldReportNestedStep()
+{
+    await StepRunner.Execute(new List<string>(){"step2"});
+    TestContext.StandardOut.Should().Contain("step1");
+    TestContext.StandardOut.Should().Contain("step2");
+}
 
-// public async Task ShouldMarkDefaultStepInHelp()
-// {
-//     await StepRunner.Execute(new List<string>(){"help"});
-//     TestContext.StandardOut.Should().Contain("step1 (default)");
-// }
+public async Task ShouldMarkDefaultStepInHelp()
+{
+    await StepRunner.Execute(new List<string>(){"help"});
+    TestContext.StandardOut.Should().Contain("step1 (default)");
+}
 
 
 
