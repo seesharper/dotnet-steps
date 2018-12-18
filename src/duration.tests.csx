@@ -28,6 +28,27 @@ Step step4 = () =>
     Thread.Sleep(100);
 };
 
+AsyncStep asyncStep1 = async () => await Task.Delay(100);
+
+
+AsyncStep asyncStep2 = async () =>
+{
+    await Task.Delay(100);
+};
+
+AsyncStep asyncStep3 = async () =>
+{
+    await asyncStep1();
+    await asyncStep2();
+    await Task.Delay(100);
+};
+
+AsyncStep asyncStep4 = async () =>
+{
+    await asyncStep3();
+    await Task.Delay(100);
+};
+
 private StepResult[] _results;
 
 SummaryStep summaryStep = (results) => _results = results.ToArray();
@@ -42,9 +63,21 @@ public async Task ShouldReportIndividualStepDurations()
     TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(300));
 }
 
+public async Task ShouldReportIndividualAsyncStepDurations()
+{
+    await StepRunner.Execute(new List<string>(){"asyncStep3"});
+    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(300));
+}
+
 
 public async Task ShouldReportIndividualStepDurationsForNestedSteps()
 {
     await StepRunner.Execute(new List<string>(){"step4"});
+    TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(400));
+}
+
+public async Task ShouldReportIndividualAsyncStepDurationsForNestedSteps()
+{
+    await StepRunner.Execute(new List<string>(){"asyncStep4"});
     TimeSpan.FromTicks(_results.Sum(r => r.Duration.Ticks)).Should().BeCloseTo(TimeSpan.FromMilliseconds(400));
 }

@@ -153,22 +153,11 @@ private static class StepRunner
             var step = GetStepDelegate<Step>(stepField);
             Step wrappedStep = () =>
             {
-                var stepresult = new StepResult(stepField.Name, TimeSpan.Zero, TimeSpan.Zero);
-                //_results.Add(stepresult);
-                _callStack.Push(stepresult);
+                StepResult stepresult = PushStepResultOntoCallStack(stepField);
                 var stopWatch = Stopwatch.StartNew();
                 step();
                 stopWatch.Stop();
-                var durationForThisStep = stopWatch.Elapsed;
-                stepresult.TotalDuration = durationForThisStep;
-                _results.Add(_callStack.Pop());
-
-                if (_callStack.Count > 0)
-                {
-                    var callingStep = _callStack.Peek();
-                    callingStep.Duration = callingStep.Duration.Subtract(durationForThisStep);
-                }
-                stepresult.Duration = stepresult.Duration.Add(durationForThisStep);
+                PopCallStackAndUpdateDurations(stepresult, stopWatch);
             };
             stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
         }
@@ -182,14 +171,38 @@ private static class StepRunner
             var step = GetStepDelegate<AsyncStep>(stepField);
             AsyncStep wrappedStep = async () =>
             {
+                StepResult stepresult = PushStepResultOntoCallStack(stepField);
                 var stopWatch = Stopwatch.StartNew();
                 await step();
-                // Do something with calling step to be able to report own time spent in this method.
-                results.Add(new StepResult(stepField.Name, stopWatch.Elapsed, stopWatch.Elapsed));
+                stopWatch.Stop();
+                PopCallStackAndUpdateDurations(stepresult, stopWatch);
             };
             stepField.SetValue(stepField.IsStatic ? null : _submission, wrappedStep);
         }
     }
+
+    private static StepResult PushStepResultOntoCallStack(FieldInfo stepField)
+    {
+        var stepresult = new StepResult(stepField.Name, TimeSpan.Zero, TimeSpan.Zero);
+        _callStack.Push(stepresult);
+        return stepresult;
+    }
+
+    private static void PopCallStackAndUpdateDurations(StepResult stepresult, Stopwatch stopWatch)
+    {
+        var durationForThisStep = stopWatch.Elapsed;
+        stepresult.TotalDuration = durationForThisStep;
+        _results.Add(_callStack.Pop());
+
+        if (_callStack.Count > 0)
+        {
+            var callingStep = _callStack.Peek();
+            callingStep.Duration = callingStep.Duration.Subtract(durationForThisStep);
+        }
+        stepresult.Duration = stepresult.Duration.Add(durationForThisStep);
+    }
+
+
 
     private static SummaryStep GetSummaryStepDelegate()
     {
