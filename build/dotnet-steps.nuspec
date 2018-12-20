@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>ScriptUnit</id>
-    <title>ScriptUnit</title>
+    <id>dotnet-steps</id>
+    <title>dotnet-steps</title>
     <version>0.0.1</version>
     <description>A small step for man kind, but a HUGE leap for build scripts.</description>
     <authors>Bernhard Richter</authors>
