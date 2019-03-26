@@ -44,6 +44,7 @@ public async Task ShouldShowHelp()
     TestContext.StandardOut.Should().Contain("Available Steps");
     TestContext.StandardOut.Should().Contain("This is step one");
     TestContext.StandardOut.Should().Contain("step1 (default)");
+    TestContext.StandardOut.Should().NotContain("Steps Summary");
 }
 
 public async Task ShouldReportNestedStep()

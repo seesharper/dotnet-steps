@@ -125,6 +125,12 @@ private static class StepRunner
 
         var stepDelegates = GetStepDelegates();
 
+        if (stepNames.Contains("help", StringComparer.OrdinalIgnoreCase))
+        {
+            ShowHelp(stepDelegates.Values.ToArray());
+            return;
+        }
+
         if (stepDelegates.Keys.Intersect(stepNames).Count() == 0)
         {
             await GetDefaultDelegate(stepDelegates)();
@@ -134,11 +140,11 @@ private static class StepRunner
         {
             _callStack.Clear();
 
-            if (stepName.Equals("help", StringComparison.OrdinalIgnoreCase))
-            {
-                stepDelegates.Values.ToArray().ShowHelp();
-                continue;
-            }
+            // if (stepName.Equals("help", StringComparison.OrdinalIgnoreCase))
+            // {
+            //     stepDelegates.Values.ToArray().ShowHelp();
+            //     break;
+            // }
 
             if (stepDelegates.TryGetValue(stepName, out var stepDelegate))
             {
