@@ -95,7 +95,7 @@ public static void ShowSummary(this StepResult[] results)
     WriteLine($"{"Total".PadRight(stepMaxWidth)}{total.ToString()}");
 }
 
-
+[DebuggerStepThrough]
 private static class StepRunner
 {
     private static object _submission;
