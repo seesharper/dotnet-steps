@@ -16,5 +16,7 @@ public async Task ShouldShowHelpWhenThereIsNoDefaultStep()
 {
     await ExecuteSteps(new List<string>());
     TestContext.StandardOut.Should().Contain("Available Steps");
+    TestContext.StandardOut.Should().Contain("step1");
+    TestContext.StandardOut.Should().Contain("step2");
     TestContext.StandardOut.Should().NotContain("Summary");
 }
